@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+
+  .input-label {
+    @apply block text-gray-100 text-sm font-bold mb-2;
+  }
+
+  .input-field {
+    @apply bg-transparent appearance-none border border-gray-400 rounded-lg w-full py-2 px-3 text-gray-100 leading-tight focus:outline-none focus:border-blue-400 transition-colors;
+  }
+
+  .button {
+     @apply flex justify-center items-center px-3 py-2 font-medium text-white transition-all rounded-lg hover:opacity-80 bg-blue-400 disabled:cursor-not-allowed disabled:hover:opacity-100 disabled:bg-blue-900;
+  }
+
+}
