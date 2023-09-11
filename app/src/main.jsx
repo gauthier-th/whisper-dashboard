@@ -4,11 +4,13 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Provider } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
 import { persistStore } from 'redux-persist'
+import { Toaster } from 'react-hot-toast'
 import store from './redux/store.js'
 import Layout from './components/layout.jsx'
 import App from './routes/index.jsx'
 import ErrorPage from './error-page.jsx'
 import Login from './routes/login.jsx'
+import Logout from './routes/logout.jsx'
 import './index.css'
 
 const router = createBrowserRouter([
@@ -26,6 +28,10 @@ const router = createBrowserRouter([
         element: <Login />,
       },
       {
+        path: 'logout',
+        element: <Logout />,
+      },
+      {
         path: '*',
         element: <ErrorPage />,
       },
@@ -39,6 +45,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
+        <Toaster />
         <RouterProvider router={router} />
       </PersistGate>
     </Provider>

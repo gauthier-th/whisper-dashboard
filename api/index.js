@@ -4,6 +4,7 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import { expressjwt } from 'express-jwt';
 import 'dotenv/config';
+import { checkUserCredentials } from './database.js';
 
 const app = express();
 
@@ -13,6 +14,7 @@ const handleJwtError = (err, req, res, next) => {
     res.status(401).send('Invalid token');
   }
 };
+const jwtMiddleware = expressjwt({ secret: process.env.JWT_SECRET, algorithms: ['HS256'] });
 
 app.use(express.json());
 
@@ -26,19 +28,17 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(path.resolve(), '../app/dist', 'index.html'));
 });
 
-// JWT auth middleware
-app.use('/api', expressjwt({ secret: process.env.JWT_SECRET, algorithms: ['HS256'] }), handleJwtError);
-
 app.get('/api', (req, res) => {
   res.send('Hello from API!');
 });
 
 // Route to authenticate and get JWT
-app.post('/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  if (username && password) {
+  const user = await checkUserCredentials(username, password);
+  if (user) {
     const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '30d' });
-    res.json({ token });
+    res.json({ token, user });
   } else {
     res.status(400).send('Bad credentials');
   }
