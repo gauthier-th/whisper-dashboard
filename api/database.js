@@ -12,6 +12,7 @@ db.serialize(() => {
     db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT, email TEXT, role TEXt, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)", async () => {
       await createUser({ username: "admin", password: "admin", email: "test@mail.com", role: "admin" });
     });
+    db.run("CREATE TABLE IF NOT EXISTS transcriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, filename TEXT, path TEXT, size INTEGER, mimetype TEXT, duration INTEGER, status TEXT, user_id INTEGER, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
   });
 });
 
@@ -103,6 +104,81 @@ export async function updateUser({ id, username, password, email, role } = {}) {
 export async function deleteUser(id) {
   return new Promise((resolve, reject) => {
     db.run("DELETE FROM users WHERE id = ?", [id], (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+export async function createTranscription({ filename, path, size, mimetype, duration, status, user_id, result }) {
+  return new Promise((resolve, reject) => {
+    db.run("INSERT INTO transcriptions (filename, path, size, mimetype, duration, status, user_id, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [filename, path, size, mimetype, duration, status, user_id, result], function (err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ id: this.lastID });
+      }
+    });
+  });
+}
+
+export async function getTranscriptionById(id) {
+  return new Promise((resolve, reject) => {
+    db.get("SELECT * FROM transcriptions WHERE id = ?", [id], (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row);
+      }
+    });
+  });
+}
+
+export async function getTranscriptions({ limit, offset } = {}) {
+  return new Promise((resolve, reject) => {
+    const params = [];
+    if (limit) params.push(limit);
+    if (offset) params.push(offset);
+    db.all(`SELECT * FROM transcriptions ${limit ? "LIMIT ?" : ""} ${offset ? "OFFSET ?" : ""}`, params, (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+}
+
+export async function updateTranscription({ id, filename, path, size, mimetype, duration, status, user_id, result } = {}) {
+  return new Promise(async (resolve, reject) => {
+    const params = [];
+    if (filename) params.push(filename);
+    if (path) params.push(path);
+    if (size) params.push(size);
+    if (mimetype) params.push(mimetype);
+    if (duration) params.push(duration);
+    if (status) params.push(status);
+    if (user_id) params.push(user_id);
+    if (result) params.push(result);
+    if (!params.length) {
+      reject(new Error("Nothing to update"));
+    }
+    db.run(`UPDATE transcriptions SET ${filename ? "filename = ?" : ""} ${path ? "path = ?" : ""} ${size ? "size = ?" : ""} ${mimetype ? "mimetype = ?" : ""} ${duration ? "duration = ?" : ""} ${status ? "status = ?" : ""} ${user_id ? "user_id = ?" : ""} ${result ? "result = ?" : ""} WHERE id = ?`, [...params, id], (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+export async function deleteTranscription(id) {
+  return new Promise((resolve, reject) => {
+    db.run("DELETE FROM transcriptions WHERE id = ?", [id], (err) => {
       if (err) {
         reject(err);
       } else {

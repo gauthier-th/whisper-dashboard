@@ -128,3 +128,6 @@ dist
 
 # database
 whisper-dashboard.db
+
+# temp files
+tmp
