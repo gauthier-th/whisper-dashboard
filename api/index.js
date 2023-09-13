@@ -8,6 +8,7 @@ import { expressjwt } from 'express-jwt';
 import { getAudioDurationInSeconds } from 'get-audio-duration';
 import 'dotenv/config';
 import { checkUserCredentials, createTranscription, getTranscriptionById, getTranscriptions } from './database.js';
+import e from 'express';
 
 const app = express();
 
@@ -111,6 +112,37 @@ app.post('/api/transcriptions', jwtMiddleware, async (req, res) => {
   }
   catch (e) {
     console.log(e);
+    res.status(500).send('Internal server error');
+  }
+});
+app.get('/api/transcriptions/:id/download', jwtMiddleware, async (req, res) => {
+  try {
+    const transcription = await getTranscriptionById(req.params.id);
+    if (!transcription) {
+      res.status(404).send('Transcription not found');
+      return;
+    }
+    const token = jwt.sign({ transcriptionId: transcription.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({
+      url: `/transcriptions/file/${encodeURIComponent(token)}`,
+    });
+  }
+  catch (err) {
+    res.status(500).send('Internal server error');
+  }
+});
+app.get('/api/transcriptions/file/:token', async (req, res) => {
+  try {
+    const { transcriptionId } = jwt.verify(req.params.token, process.env.JWT_SECRET);
+    const transcription = await getTranscriptionById(transcriptionId);
+    if (!transcription) {
+      res.status(404).send('Transcription not found');
+      return;
+    }
+    const filePath = path.join(path.resolve(), 'files', transcription.path);
+    res.download(filePath, transcription.filename);
+  }
+  catch (err) {
     res.status(500).send('Internal server error');
   }
 });

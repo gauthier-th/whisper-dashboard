@@ -27,7 +27,7 @@ function Layout() {
           </button>
         )}
       </div>
-      <div className="flex-1 flex flex-col">
+      <div className="mt-2 flex-1 flex flex-col">
         <Outlet />
       </div>
     </div>
