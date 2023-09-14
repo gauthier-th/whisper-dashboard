@@ -1,14 +1,16 @@
+import 'dotenv/config';
+import fs from 'fs/promises';
 import path from 'path';
 import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import fileUpload from 'express-fileupload';
 import { v4 as uuidv4 } from 'uuid';
-import { expressjwt } from 'express-jwt';
 import { getAudioDurationInSeconds } from 'get-audio-duration';
-import 'dotenv/config';
 import { checkUserCredentials, createTranscription, deleteTranscription, getTranscriptionById, getTranscriptions } from './database.js';
-import e from 'express';
+import { browseTranscriptions } from './whisper.js';
+
+browseTranscriptions(); // Start the transcription process
 
 const app = express();
 
@@ -88,6 +90,7 @@ app.delete('/api/transcriptions/:id', jwtMiddleware, async (req, res) => {
     const transcription = await getTranscriptionById(req.params.id);
     if (transcription) {
       await deleteTranscription(req.params.id);
+      await fs.unlink(path.join(path.resolve(), 'files', transcription.path));
       res.status(204).send('Transcription deleted');
     }
   }
@@ -120,6 +123,7 @@ app.post('/api/transcriptions', jwtMiddleware, async (req, res) => {
     };
     const { id: transcriptionId } = await createTranscription(transcriptionData);
     const transcription = await getTranscriptionById(transcriptionId);
+    browseTranscriptions();
     res.json(transcription);
   }
   catch (e) {
@@ -143,7 +147,7 @@ app.get('/api/transcriptions/:id/download', jwtMiddleware, async (req, res) => {
     res.status(500).send('Internal server error');
   }
 });
-app.get('/api/transcriptions/file/:token', async (req, res) => {
+app.get('/api/transcriptions/file/:token/:format?', async (req, res) => {
   try {
     const { transcriptionId } = jwt.verify(req.params.token, process.env.JWT_SECRET);
     const transcription = await getTranscriptionById(transcriptionId);
@@ -151,8 +155,8 @@ app.get('/api/transcriptions/file/:token', async (req, res) => {
       res.status(404).send('Transcription not found');
       return;
     }
-    const filePath = path.join(path.resolve(), 'files', transcription.path);
-    res.download(filePath, transcription.filename);
+    const filePath = path.join(path.resolve(), 'files', transcription.path.replace(/\.[^/.]+$/, '') + (req.params.format ? '.' + req.params.format : ''));
+    res.download(filePath, transcription.filename.replace(/\.[^/.]+$/, '') + (req.params.format ? '.' + req.params.format : ''));
   }
   catch (err) {
     res.status(500).send('Download link expired');

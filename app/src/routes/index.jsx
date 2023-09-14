@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import toast from 'react-hot-toast'
+import { RiLoader4Fill, RiAddFill } from 'react-icons/ri'
 import Modal from '../components/modal.jsx'
-import { HiOutlinePlus } from 'react-icons/hi'
 
 function App() {
   const accessToken = useSelector((state) => state.accessToken)
@@ -29,21 +29,21 @@ function App() {
     }
   }
 
-  async function downloadTranscription(id) {
+  async function downloadTranscription(id, format) {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/transcriptions/${id}/download`, {
         method: 'GET',
         headers: {
           'Authorization': `JWT ${accessToken}`
         },
-      });
+      })
       const data = await response.json()
       if (data) {
-        const link = document.createElement('a');
-        link.href = import.meta.env.VITE_API_URL + data.url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const link = document.createElement('a')
+        link.href = import.meta.env.VITE_API_URL + data.url + (format ? '/' + format : '')
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
       }
       else {
         toast.error('Error while downloading transcription')
@@ -56,6 +56,8 @@ function App() {
 
   useEffect(() => {
     listTranscriptions()
+    const timer = setInterval(() => listTranscriptions(), 5000)
+    return () => clearInterval(timer)
   }, [])
 
   function StatusBadge({ status }) {
@@ -110,6 +112,9 @@ function App() {
                 <span>{Math.round(transcription.duration / 60)}min{Math.round(transcription.duration % 60)}sec</span>
                 <span><StatusBadge status={transcription.status} /></span>
                 <span className="flex items-center gap-2">
+                  {transcription.status === "done" && (
+                    <ResultModal transcription={transcription} downloadTranscription={downloadTranscription} />
+                  )}
                   <DeleteModal transcriptionId={transcription.id} reloadList={listTranscriptions} />
                 </span>
               </div>
@@ -154,7 +159,7 @@ function NewTranscriptionModal({ reloadList }) {
 
   return <>
     <button className="button" onClick={() => setIsNewTranscriptionOpen(true)}>
-      <HiOutlinePlus className="mr-2 mt-0.5" />
+      <RiAddFill className="mr-2 mt-0.5" />
       New transcription
     </button>
     <Modal
@@ -231,6 +236,88 @@ function DeleteModal({ transcriptionId, reloadList }) {
           Delete
         </button>
       </div>
+    </Modal>
+  </>
+}
+
+function ResultModal({ transcription, downloadTranscription }) {
+  const accessToken = useSelector((state) => state.accessToken)
+  const [isResultOpen, setIsResultOpen] = useState(false)
+  const [overview, setOverview] = useState(null)
+
+  const result = JSON.parse(transcription.result)
+
+  async function getTextTranscription() {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/transcriptions/${transcription.id}/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `JWT ${accessToken}`
+        },
+      });
+      const data1 = await response.json()
+      if (data1) {
+        const response = await fetch(import.meta.env.VITE_API_URL + data1.url + '/txt')
+        const data2 = await response.text()
+        if (data2) {
+          setOverview(data2)
+        }
+        else {
+          toast.error('Error while fetching transcription')
+        }
+      }
+      else {
+        toast.error('Error while fetching transcription')
+      }
+    }
+    catch {
+      toast.error('Error while fetching transcription')
+    }
+  }
+
+  useEffect(() => {
+    if (isResultOpen) getTextTranscription()
+  }, [isResultOpen])
+
+  return <>
+    <button
+      className="button button-small"
+      onClick={() => setIsResultOpen(true)}
+    >
+      View result
+    </button>
+    <Modal
+      isOpen={isResultOpen}
+      onClose={() => setIsResultOpen(false)}
+      title="Transcription result"
+      maxSize="max-w-sm sm:max-w-2xl"
+    >
+      <h3>Download formats:</h3>
+      <div className="flex gap-2">
+        {result.map((format) => (
+          <a
+            key={format}
+            href="#"
+            className="text-blue-500 underline"
+            onClick={(e) => {
+              e.preventDefault();
+              downloadTranscription(transcription.id, format);
+            }}
+          >
+            {format}
+          </a>
+        ))}
+      </div>
+      <h3 className="mt-4">Overview:</h3>
+      {overview ? (
+        <div>
+          <textarea className="w-full h-64 bg-black rounded-lg py-1 px-2" value={overview} readOnly />
+        </div>
+      ) : (
+        <div className="flex justify-center items-center">
+          <RiLoader4Fill className="text-3xl animate-spin mr-2" />
+        </div>
+      )}
     </Modal>
   </>
 }

@@ -5,7 +5,7 @@ export default function ErrorPage() {
   console.error(error);
 
   return (
-    <div className="w-full flex-1 flex flex-col justify-center items-center">
+    <div className="bg-gray-800 text-white w-full flex-1 min-h-screen flex flex-col justify-center items-center">
       <h1 className="text-3xl my-2">Oops!</h1>
       <p>Sorry, an unexpected error has occurred.</p>
       <p>

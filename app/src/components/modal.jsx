@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { HiX } from 'react-icons/hi'
+import { RiCloseFill } from 'react-icons/ri'
 
 export default function Modal({ isOpen, children, onClose, title, className, maxSize }) {
   return (
@@ -32,7 +32,7 @@ export default function Modal({ isOpen, children, onClose, title, className, max
               >
                 <div className={`w-full pointer-events-auto ${maxSize ?? "max-w-sm sm:max-w-md"} transform overflow-hidden rounded-2xl bg-gray-800 p-3 sm:p-5 text-left align-middle shadow-xl transition-all text-white ${className}`}>
                   <div className="absolute cursor-pointer top-3 right-3 sm:top-5 sm:right-5">
-                    <HiX className="text-xl text-gray-500 transition-colors hover:text-red-500" onClick={onClose} />
+                    <RiCloseFill className="text-xl text-gray-500 transition-colors hover:text-red-500" onClick={onClose} />
                   </div>
                   {/* To avoid scroll on the bottom button */}
                   <div style={{ maxWidth: 0, maxHeight: 0, overflow: "hidden" }}>

@@ -21,7 +21,6 @@
     "jsonwebtoken": "^9.0.2",
     "node-whisper": "^2023.9.10",
     "sqlite3": "^5.1.6",
-    "uuid": "^9.0.1",
-    "whisper-node": "^0.2.12"
+    "uuid": "^9.0.1"
   }
 }

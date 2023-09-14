@@ -127,7 +127,7 @@ export async function createTranscription({ filename, path, size, mimetype, dura
 
 export async function getTranscriptionById(id) {
   return new Promise((resolve, reject) => {
-    db.get("SELECT * FROM transcriptions WHERE id = ?", [id], (err, row) => {
+    db.get(`SELECT * FROM transcriptions WHERE id = ?`, [id], (err, row) => {
       if (err) {
         reject(err);
       } else {
@@ -137,12 +137,20 @@ export async function getTranscriptionById(id) {
   });
 }
 
-export async function getTranscriptions({ limit, offset } = {}) {
+export async function getTranscriptions({ filters, filterParams, limit, offset, sort } = {}) {
   return new Promise((resolve, reject) => {
     const params = [];
+    const whereFilters = (filters || []).join(" AND ");
+    if (filterParams) params.push(...filterParams);
     if (limit) params.push(limit);
     if (offset) params.push(offset);
-    db.all(`SELECT * FROM transcriptions ${limit ? "LIMIT ?" : ""} ${offset ? "OFFSET ?" : ""}`, params, (err, rows) => {
+    db.all(`
+      SELECT * FROM transcriptions
+      ${whereFilters ? `WHERE ${whereFilters}` : ""}
+      ${sort ? `ORDER BY ${sort[0]} ${sort[1]}` : ""}
+      ${limit ? "LIMIT ?" : ""}
+      ${offset ? "OFFSET ?" : ""}
+    `, params, (err, rows) => {
       if (err) {
         reject(err);
       } else {
@@ -155,18 +163,19 @@ export async function getTranscriptions({ limit, offset } = {}) {
 export async function updateTranscription({ id, filename, path, size, mimetype, duration, status, user_id, result } = {}) {
   return new Promise(async (resolve, reject) => {
     const params = [];
-    if (filename) params.push(filename);
-    if (path) params.push(path);
-    if (size) params.push(size);
-    if (mimetype) params.push(mimetype);
-    if (duration) params.push(duration);
-    if (status) params.push(status);
-    if (user_id) params.push(user_id);
-    if (result) params.push(result);
+    if (filename) params.push(["filename", filename]);
+    if (path) params.push(["path", path]);
+    if (size) params.push(["size", size]);
+    if (mimetype) params.push(["mimetype", mimetype]);
+    if (duration) params.push(["duration", duration]);
+    if (status) params.push(["status", status]);
+    if (user_id) params.push(["user_id", user_id]);
+    if (result) params.push(["result", result]);
     if (!params.length) {
       reject(new Error("Nothing to update"));
     }
-    db.run(`UPDATE transcriptions SET ${filename ? "filename = ?" : ""} ${path ? "path = ?" : ""} ${size ? "size = ?" : ""} ${mimetype ? "mimetype = ?" : ""} ${duration ? "duration = ?" : ""} ${status ? "status = ?" : ""} ${user_id ? "user_id = ?" : ""} ${result ? "result = ?" : ""} WHERE id = ?`, [...params, id], (err) => {
+    const setString = params.map(([name, _]) => `${name} = ?`).join(", ");
+    db.run(`UPDATE transcriptions SET ${setString} WHERE id = ?`, [...params.map(([_, value]) => value), id], (err) => {
       if (err) {
         reject(err);
       } else {
