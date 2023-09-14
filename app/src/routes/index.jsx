@@ -77,7 +77,7 @@ function App() {
     <div className="flex-1 flex flex-col items-center py-2 px-4">
       <div className="w-full flex justify-between items-center">
         <h2 className="text-xl">Your transcriptions:</h2>
-        <NewTranscriptionModal />
+        <NewTranscriptionModal reloadList={listTranscriptions} />
       </div>
       {transcriptions?.length === 0 && (
         <div>
@@ -86,7 +86,7 @@ function App() {
       )}
       {transcriptions?.length > 0 && (
         <div className="mt-2 w-full rounded-lg border border-gray-600 p-4">
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-1">
             <div className="grid grid-cols-8 mb-2 font-bold">
               <span className="col-span-4">File name</span>
               <span>Duration</span>
@@ -94,7 +94,7 @@ function App() {
               <span>Actions</span>
             </div>
             {transcriptions.map((transcription) => (
-              <div key={transcription.id} className="grid grid-cols-8">
+              <div key={transcription.id} className="grid grid-cols-8 items-center">
                 <span className="col-span-4 overflow-hidden truncate">
                   <a
                     href="#"
@@ -110,9 +110,7 @@ function App() {
                 <span>{Math.round(transcription.duration / 60)}min{Math.round(transcription.duration % 60)}sec</span>
                 <span><StatusBadge status={transcription.status} /></span>
                 <span className="flex items-center gap-2">
-                  <button className="button button-small bg-red-500 disabled:bg-red-900">
-                    Delete
-                  </button>
+                  <DeleteModal transcriptionId={transcription.id} reloadList={listTranscriptions} />
                 </span>
               </div>
             ))}
@@ -123,7 +121,7 @@ function App() {
   )
 }
 
-function NewTranscriptionModal() {
+function NewTranscriptionModal({ reloadList }) {
   const accessToken = useSelector((state) => state.accessToken)
   const [isNewTranscriptionOpen, setIsNewTranscriptionOpen] = useState(false)
   const [file, setFile] = useState(null)
@@ -145,6 +143,7 @@ function NewTranscriptionModal() {
         toast.success('File uploaded successfully')
         setIsNewTranscriptionOpen(false)
         setFile(null)
+        reloadList()
       }
     }
     catch (e) {
@@ -176,6 +175,63 @@ function NewTranscriptionModal() {
         Send file
       </button>
     </Modal> 
+  </>
+}
+
+function DeleteModal({ transcriptionId, reloadList }) {
+  const accessToken = useSelector((state) => state.accessToken)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+
+  async function deleteTranscription() {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/transcriptions/${transcriptionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `JWT ${accessToken}`
+        },
+      })
+      if (response.status === 204) {
+        toast.success('Transcription deleted successfully')
+        setIsDeleteOpen(false)
+        reloadList()
+      }
+      else {
+        toast.error('Error while deleting transcription')
+      }
+    }
+    catch {
+      toast.error('Error while deleting transcription') 
+    }
+  }
+
+  return <>
+    <button
+      className="button button-small bg-red-500 disabled:bg-red-900"
+      onClick={() => setIsDeleteOpen(true)}
+    >
+      Delete
+    </button>
+    <Modal
+      isOpen={isDeleteOpen}
+      onClose={() => setIsDeleteOpen(false)}
+      title="Delete transcription"
+    >
+      <span>Are you sure you want to delete this transcription?</span>
+      <div className="flex justify-end items-center gap-4 mt-4">
+        <button
+          className="button button-secondary"
+          onClick={() => setIsDeleteOpen(false)}
+        >
+          Cancel
+        </button>
+        <button
+          className="button bg-red-500 disabled:bg-red-900"
+          onClick={() => deleteTranscription()}
+        >
+          Delete
+        </button>
+      </div>
+    </Modal>
   </>
 }
 

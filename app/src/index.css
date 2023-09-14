@@ -15,6 +15,9 @@
   .button {
      @apply flex justify-center items-center px-3 py-2 font-medium text-white transition-all rounded-lg hover:opacity-80 bg-blue-400 disabled:cursor-not-allowed disabled:hover:opacity-100 disabled:bg-blue-900;
   }
+  .button-secondary {
+    @apply bg-gray-600 disabled:bg-gray-900;
+  }
   .button-small {
     @apply px-2.5 py-1;
   }

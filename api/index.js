@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { expressjwt } from 'express-jwt';
 import { getAudioDurationInSeconds } from 'get-audio-duration';
 import 'dotenv/config';
-import { checkUserCredentials, createTranscription, getTranscriptionById, getTranscriptions } from './database.js';
+import { checkUserCredentials, createTranscription, deleteTranscription, getTranscriptionById, getTranscriptions } from './database.js';
 import e from 'express';
 
 const app = express();
@@ -83,6 +83,18 @@ app.get('/api/transcriptions/:id', jwtMiddleware, async (req, res) => {
     res.status(500).send('Internal server error');
   }
 });
+app.delete('/api/transcriptions/:id', jwtMiddleware, async (req, res) => {
+  try {
+    const transcription = await getTranscriptionById(req.params.id);
+    if (transcription) {
+      await deleteTranscription(req.params.id);
+      res.status(204).send('Transcription deleted');
+    }
+  }
+  catch {
+    res.status(500).send('Internal server error');
+  }
+});
 app.post('/api/transcriptions', jwtMiddleware, async (req, res) => {
   try {
     if (!req.files || !req.files.file) {
@@ -143,7 +155,7 @@ app.get('/api/transcriptions/file/:token', async (req, res) => {
     res.download(filePath, transcription.filename);
   }
   catch (err) {
-    res.status(500).send('Internal server error');
+    res.status(500).send('Download link expired');
   }
 });
 
