@@ -76,7 +76,7 @@ function App() {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center py-2 px-4">
+    <div className="flex-1 flex flex-col items-center">
       <div className="w-full flex justify-between items-center">
         <h2 className="text-xl">Your transcriptions:</h2>
         <NewTranscriptionModal reloadList={listTranscriptions} />

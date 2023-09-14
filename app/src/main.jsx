@@ -11,6 +11,7 @@ import App from './routes/index.jsx'
 import ErrorPage from './error-page.jsx'
 import Login from './routes/login.jsx'
 import Logout from './routes/logout.jsx'
+import Account from './routes/account.jsx'
 import './index.css'
 
 const router = createBrowserRouter([
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
       {
         path: 'logout',
         element: <Logout />,
+      },
+      {
+        path: 'account',
+        element: <Account />,
       },
       {
         path: '*',

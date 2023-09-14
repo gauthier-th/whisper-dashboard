@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 import fileUpload from 'express-fileupload';
 import { v4 as uuidv4 } from 'uuid';
 import { getAudioDurationInSeconds } from 'get-audio-duration';
-import { checkUserCredentials, createTranscription, deleteTranscription, getTranscriptionById, getTranscriptions } from './database.js';
+import { checkUserCredentials, createTranscription, deleteTranscription, getTranscriptionById, getTranscriptions, updateUser } from './database.js';
 import { browseTranscriptions } from './whisper.js';
 
 browseTranscriptions(); // Start the transcription process
@@ -57,6 +57,16 @@ app.post('/api/login', async (req, res) => {
   if (user) {
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, user });
+  } else {
+    res.status(400).send('Bad credentials');
+  }
+});
+app.post('/api/change-password', jwtMiddleware, async (req, res) => {
+  const { password, newPassword } = req.body;
+  const user = await checkUserCredentials(req.user.username, password);
+  if (user) {
+    await updateUser({ id: user.id, password: newPassword });
+    res.status(204).send('Password changed');
   } else {
     res.status(400).send('Bad credentials');
   }
