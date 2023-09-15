@@ -29,6 +29,9 @@
   .button-small {
     @apply px-2.5 py-1;
   }
+  .button-outline {
+    @apply bg-transparent border border-gray-500;
+  }
   
   .file-input {
     /* @apply bg-transparent appearance-none border border-gray-400 rounded-lg w-full py-2 px-3 text-gray-100 leading-tight focus:outline-none focus:border-blue-400 transition-colors; */

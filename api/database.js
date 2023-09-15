@@ -84,14 +84,15 @@ export async function getUsers({ limit, offset } = {}) {
 export async function updateUser({ id, username, password, email, role } = {}) {
   return new Promise(async (resolve, reject) => {
     const params = [];
-    if (username) params.push(username);
-    if (password) params.push(await bcrypt.hash(password, saltRounds));
-    if (email) params.push(email);
-    if (role) params.push(role);
+    if (username) params.push(['username', username]);
+    if (password) params.push(['password', await bcrypt.hash(password, saltRounds)]);
+    if (email) params.push(['email',email]);
+    if (role) params.push(['role', role]);
     if (!params.length) {
       reject(new Error("Nothing to update"));
     }
-    db.run(`UPDATE users SET ${username ? "username = ?" : ""} ${password ? "password = ?" : ""} ${email ? "email = ?" : ""} ${role ? "role = ?" : ""} WHERE id = ?`, [...params, id], (err) => {
+    const setString = params.map(([name, _]) => `${name} = ?`).join(", ");
+    db.run(`UPDATE users SET ${setString} WHERE id = ?`, [...params.map(([_, value]) => value), id], (err) => {
       if (err) {
         reject(err);
       } else {

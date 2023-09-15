@@ -81,12 +81,17 @@ function App() {
         <h2 className="text-xl">Your transcriptions:</h2>
         <NewTranscriptionModal reloadList={listTranscriptions} />
       </div>
-      {transcriptions?.length === 0 && (
+      {!transcriptions && (
+        <div className="flex justify-center items-center mt-4">
+          <RiLoader4Fill className="text-3xl animate-spin" />
+        </div>
+      )}
+      {transcriptions && transcriptions.length === 0 && (
         <div>
           <span className="text-gray-300">You don&apos;t have any transcriptions yet</span>
         </div>
       )}
-      {transcriptions?.length > 0 && (
+      {transcriptions && transcriptions.length > 0 && (
         <div className="mt-2 w-full rounded-lg border border-gray-600 p-4">
           <div className="flex flex-col gap-1">
             <div className="grid grid-cols-8 mb-2 font-bold">

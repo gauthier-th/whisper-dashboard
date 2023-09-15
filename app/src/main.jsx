@@ -12,6 +12,7 @@ import ErrorPage from './error-page.jsx'
 import Login from './routes/login.jsx'
 import Logout from './routes/logout.jsx'
 import Account from './routes/account.jsx'
+import Admin from './routes/admin.jsx'
 import './index.css'
 
 const router = createBrowserRouter([
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
       {
         path: 'account',
         element: <Account />,
+      },
+      {
+        path: 'admin',
+        element: <Admin />,
       },
       {
         path: '*',

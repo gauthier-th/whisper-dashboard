@@ -7,7 +7,18 @@ import jwt from 'jsonwebtoken';
 import fileUpload from 'express-fileupload';
 import { v4 as uuidv4 } from 'uuid';
 import { getAudioDurationInSeconds } from 'get-audio-duration';
-import { checkUserCredentials, createTranscription, deleteTranscription, getTranscriptionById, getTranscriptions, updateUser } from './database.js';
+import {
+  checkUserCredentials,
+  createTranscription,
+  createUser,
+  deleteTranscription,
+  deleteUser,
+  getTranscriptionById,
+  getTranscriptions,
+  getUserById,
+  getUsers,
+  updateUser,
+} from './database.js';
 import { browseTranscriptions } from './whisper.js';
 
 browseTranscriptions(); // Start the transcription process
@@ -69,6 +80,76 @@ app.post('/api/change-password', jwtMiddleware, async (req, res) => {
     res.status(204).send('Password changed');
   } else {
     res.status(400).send('Bad credentials');
+  }
+});
+
+app.get('/api/users', jwtMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    res.status(403).send('Forbidden');
+    return;
+  }
+  try {
+    const users = await getUsers();
+    res.json(users);
+  }
+  catch (err) {
+    res.status(500).send('Internal server error');
+  }
+});
+app.post('/api/users', jwtMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    res.status(403).send('Forbidden');
+    return;
+  }
+  const { username, password, email } = req.body;
+  try {
+    const user = await createUser({ username, password, email, role: 'user' });
+    res.json(user);
+  }
+  catch {
+    res.status(500).send('Internal server error');
+  }
+});
+app.put('/api/users/:id', jwtMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    res.status(403).send('Forbidden');
+    return;
+  }
+  const { username, password, email, role } = req.body;
+  try {
+    const user = await getUserById(req.params.id);
+    if (!user) {
+      res.status(404).send('User not found');
+      return;
+    }
+    await updateUser({ id: user.id, username, password, email, role });
+    res.status(204).send('User updated');
+  }
+  catch (e) {
+    console.log(e);
+    res.status(500).send('Internal server error');
+  }
+});
+app.delete('/api/users/:id', jwtMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    res.status(403).send('Forbidden');
+    return;
+  }
+  try {
+    const user = await getUserById(req.params.id);
+    if (!user) {
+      res.status(404).send('User not found');
+      return;
+    }
+    if (user.id === 1) {
+      res.status(403).send('Forbidden');
+      return;
+    }
+    await deleteUser(req.params.id);
+    res.status(204).send('User deleted');
+  }
+  catch {
+    res.status(500).send('Internal server error');
   }
 });
 
