@@ -7,8 +7,9 @@ import Modal from '../components/modal.jsx'
 function App() {
   const accessToken = useSelector((state) => state.accessToken)
   const [transcriptions, setTranscriptions] = useState(null)
-  
+
   async function listTranscriptions() {
+    if (!accessToken) return
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/transcriptions`, {
         method: 'GET',

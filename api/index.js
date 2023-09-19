@@ -118,6 +118,10 @@ app.put('/api/users/:id', jwtMiddleware, async (req, res) => {
   const { username, password, email, role } = req.body;
   try {
     const user = await getUserById(req.params.id);
+    if (user.id === 1 && req.user.id !== 1) {
+      res.status(403).send('Forbidden');
+      return;
+    }
     if (!user) {
       res.status(404).send('User not found');
       return;
@@ -160,16 +164,32 @@ app.get('/api/transcriptions', jwtMiddleware, async (req, res) => {
       page = Number(req.query.page);
     }
     const limit = 15;
-    const transcriptions = await getTranscriptions({ limit, offset: (page - 1) * limit });
+    const offset = (page - 1) * limit;
+    const filters = [];
+    const filterParams = [];
+    if (req.user.role !== 'admin') {
+      filters.push('user_id = ?');
+      filterParams.push(req.user.id);
+    }
+    const transcriptions = await getTranscriptions({ limit, offset, filters, filterParams });
     res.json(transcriptions);
   }
   catch (err) {
+    console.log(err);
     res.status(500).send('Internal server error');
   }
 });
 app.get('/api/transcriptions/:id', jwtMiddleware, async (req, res) => {
   try {
     const transcription = await getTranscriptionById(req.params.id);
+    if (!transcription) {
+      res.status(404).send('Transcription not found');
+      return;
+    }
+    if (req.user.role !== 'admin' && transcription.user_id !== req.user.id) {
+      res.status(403).send('Forbidden');
+      return;
+    }
     res.json(transcription);
   }
   catch (err) {
@@ -179,11 +199,17 @@ app.get('/api/transcriptions/:id', jwtMiddleware, async (req, res) => {
 app.delete('/api/transcriptions/:id', jwtMiddleware, async (req, res) => {
   try {
     const transcription = await getTranscriptionById(req.params.id);
-    if (transcription) {
-      await deleteTranscription(req.params.id);
-      await fs.unlink(path.join(path.resolve(), 'files', transcription.path));
-      res.status(204).send('Transcription deleted');
+    if (!transcription) {
+      res.status(404).send('Transcription not found');
+      return;
     }
+    if (req.user.role !== 'admin' && transcription.user_id !== req.user.id) {
+      res.status(403).send('Forbidden');
+      return;
+    }
+    await deleteTranscription(req.params.id);
+    await fs.unlink(path.join(path.resolve(), 'files', transcription.path));
+    res.status(204).send('Transcription deleted');
   }
   catch {
     res.status(500).send('Internal server error');
@@ -229,6 +255,10 @@ app.get('/api/transcriptions/:id/download', jwtMiddleware, async (req, res) => {
       res.status(404).send('Transcription not found');
       return;
     }
+    if (req.user.role !== 'admin' && transcription.user_id !== req.user.id) {
+      res.status(403).send('Forbidden');
+      return;
+    }
     const token = jwt.sign({ transcriptionId: transcription.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({
       url: `/transcriptions/file/${encodeURIComponent(token)}`,
@@ -246,8 +276,12 @@ app.get('/api/transcriptions/file/:token/:format?', async (req, res) => {
       res.status(404).send('Transcription not found');
       return;
     }
-    const filePath = path.join(path.resolve(), 'files', transcription.path.replace(/\.[^/.]+$/, '') + (req.params.format ? '.' + req.params.format : ''));
-    res.download(filePath, transcription.filename.replace(/\.[^/.]+$/, '') + (req.params.format ? '.' + req.params.format : ''));
+    const filePath = path.join(path.resolve(), 'files', req.params.format ? transcription.path.replace(/\.[^/.]+$/, '') + '.' + req.params.format : transcription.path);
+    if (!fs.existsSync(filePath)) {
+      res.status(404).send('File not found');
+      return;
+    }
+    res.download(filePath, req.params.format ? transcription.filename.replace(/\.[^/.]+$/, '') + '.' + req.params.format : transcription.filename);
   }
   catch (err) {
     res.status(500).send('Download link expired');

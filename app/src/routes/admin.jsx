@@ -3,9 +3,11 @@ import toast from "react-hot-toast"
 import { useSelector } from "react-redux"
 import { RiLoader4Fill } from "react-icons/ri"
 import Modal from "../components/modal"
+import Select from "../components/select"
 
 function Logout() {
   const accessToken = useSelector((state) => state.accessToken)
+  const loggedUser = useSelector((state) => state.user);
   const [users, setUsers] = useState(null)
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -121,19 +123,23 @@ function Logout() {
       {users && (
         <div className="mt-2 rounded-lg border border-gray-600 p-4">
           <div className="flex flex-col gap-1">
-            <div className="grid grid-cols-4 gap-4 mb-2 font-bold">
+            <div className="grid grid-cols-5 gap-4 mb-2 font-bold">
               <span>Username</span>
               <span>Email</span>
+              <span>Role</span>
               <span>Created at</span>
               <span>Actions</span>
             </div>
             {users.map((user) => (
-              <div key={user.id} className="grid grid-cols-4 gap-4 items-center">
+              <div key={user.id} className="grid grid-cols-5 gap-4 items-center">
                 <span>{user.username}</span>
                 <span>{user.email}</span>
+                <span className="capitalize">{user.role}</span>
                 <span>{new Date(user.created_at).toLocaleString()}</span>
                 <div className="flex items-center gap-2">
-                  <UpdateUserModal user={user} getUsers={getUsers} />
+                  {(user.id !== 1 || loggedUser.id === 1) && (
+                    <UpdateUserModal user={user} getUsers={getUsers} />
+                  )}
                   {user.id !== 1 && (
                     <DeleteUserModal user={user} getUsers={getUsers} />
                   )}
@@ -153,6 +159,7 @@ function UpdateUserModal({ user, getUsers }) {
   const [username, setUsername] = useState(user.username)
   const [email, setEmail] = useState(user.email)
   const [password, setPassword] = useState('')
+  const [role, setRole] = useState(user.role)
   const emailInput = useRef(null)
   const passwordInput = useRef(null)
 
@@ -164,11 +171,12 @@ function UpdateUserModal({ user, getUsers }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${acccessToken}`,
         },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ username, email, password, role }),
       })
       if (response.ok) {
         toast.success('User updated')
         getUsers()
+        setIsUpdateOpen(false)
       }
       else {
         toast.error('Failed to update user')
@@ -200,7 +208,7 @@ function UpdateUserModal({ user, getUsers }) {
           onKeyDown={(e) => e.key === 'Enter' && emailInput.current.focus()}
         />
       </div>
-      <div className="w-96 max-w-full">
+      <div className="w-96 max-w-full mt-2">
         <label className="input-label" htmlFor="email">
           Email
         </label>
@@ -215,7 +223,20 @@ function UpdateUserModal({ user, getUsers }) {
           onKeyDown={(e) => e.key === 'Enter' && passwordInput.current.focus()}
         />
       </div>
-      <div className="w-96 max-w-full">
+      <div className="w-96 max-w-full mt-2">
+        <label className="input-label" htmlFor="role">
+          Role
+        </label>
+        <div className="relative">
+          <Select
+            value={role}
+            setValue={setRole}
+            values={['user', 'admin']}
+            accessor={(value) => value.substring(0, 1).toUpperCase() + value.substring(1)}
+          />
+        </div>
+      </div>
+      <div className="w-96 max-w-full mt-2">
         <label className="input-label" htmlFor="password">
           Password
         </label>
