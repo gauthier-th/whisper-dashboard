@@ -6,6 +6,9 @@ const maxParallelTranscriptions = 1;
 let runningTranscriptions = [];
 
 export async function browseTranscriptions() {
+  // Wait for database to be ready
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
   // Check if we can start a new transcription
   if (runningTranscriptions.length === maxParallelTranscriptions) {
     return;

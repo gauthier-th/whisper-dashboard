@@ -27,7 +27,9 @@ const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cors({ origin: process.env.CORS_ORIGIN })); // CORS
+if (process.env.CORS_ORIGIN) {
+  app.use(cors({ origin: process.env.CORS_ORIGIN })); // CORS
+}
 app.use(express.static(path.join(path.resolve(), '../app/dist'))); // React App
 app.use(fileUpload({
   limits: { fileSize: 500 * 1024 * 1024 },
@@ -208,7 +210,14 @@ app.delete('/api/transcriptions/:id', jwtMiddleware, async (req, res) => {
       return;
     }
     await deleteTranscription(req.params.id);
-    await fs.unlink(path.join(path.resolve(), 'files', transcription.path));
+    const files = [transcription.path];
+    files.push(...['.txt', '.json', '.tsv', '.srt', '.vtt'].map((ext) => transcription.path.replace(/\.[^/.]+$/, '') + ext));
+    for (const file of files) {
+      try {
+        await fs.unlink(path.join(path.resolve(), 'files', file));
+      }
+      catch {}
+    }
     res.status(204).send('Transcription deleted');
   }
   catch {
@@ -277,13 +286,14 @@ app.get('/api/transcriptions/file/:token/:format?', async (req, res) => {
       return;
     }
     const filePath = path.join(path.resolve(), 'files', req.params.format ? transcription.path.replace(/\.[^/.]+$/, '') + '.' + req.params.format : transcription.path);
-    if (!fs.existsSync(filePath)) {
+    if (await fs.stat(filePath).catch(() => false) === false) {
       res.status(404).send('File not found');
       return;
     }
     res.download(filePath, req.params.format ? transcription.filename.replace(/\.[^/.]+$/, '') + '.' + req.params.format : transcription.filename);
   }
   catch (err) {
+    console.log(err);
     res.status(500).send('Download link expired');
   }
 });

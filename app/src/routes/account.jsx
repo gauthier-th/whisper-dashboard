@@ -31,6 +31,9 @@ function Logout() {
       });
       if (response.ok) {
         toast.success('Password changed successfully')
+        setPassword('')
+        setNewPassword('')
+        setNewPasswordConfirm('')
       }
       else {
         toast.error('Error while changing password')
