@@ -150,7 +150,8 @@ export async function getTranscriptions({ filters, filterParams, limit, offset, 
     if (limit) params.push(limit);
     if (offset) params.push(offset);
     db.all(`
-      SELECT * FROM transcriptions
+      SELECT transcriptions.*, users.username FROM transcriptions
+      INNER JOIN users ON transcriptions.user_id = users.id
       ${whereFilters ? `WHERE ${whereFilters}` : ""}
       ${sort ? `ORDER BY ${sort[0]} ${sort[1]}` : ""}
       ${limit ? "LIMIT ?" : ""}

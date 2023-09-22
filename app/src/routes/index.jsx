@@ -4,8 +4,24 @@ import toast from 'react-hot-toast'
 import { RiLoader4Fill, RiAddFill } from 'react-icons/ri'
 import Modal from '../components/modal.jsx'
 
+function formatFileSize(bytes) {
+  if (bytes < 1024) {
+    return bytes + 'B'
+  }
+  else if (bytes < 1024 * 1024) {
+    return Math.round(bytes / 1024) + 'KB'
+  }
+  else if (bytes < 1024 * 1024 * 1024) {
+    return Math.round(bytes / 1024 / 1024) + 'MB'
+  }
+  else {
+    return Math.round(bytes / 1024 / 1024 / 1024) + 'GB'
+  }
+}
+
 function App() {
   const accessToken = useSelector((state) => state.accessToken)
+  const user = useSelector((state) => state.user)
   const [transcriptions, setTranscriptions] = useState(null)
 
   async function listTranscriptions() {
@@ -41,7 +57,7 @@ function App() {
       const data = await response.json()
       if (data) {
         const link = document.createElement('a')
-        link.href = import.meta.env.VITE_API_URL || "/api" + data.url + (format ? '/' + format : '')
+        link.href = (import.meta.env.VITE_API_URL || "/api") + data.url + (format ? '/' + format : '')
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -96,29 +112,41 @@ function App() {
         <div className="mt-2 w-full rounded-lg border border-gray-600 p-4">
           <div className="flex flex-col gap-1">
             <div className="grid grid-cols-8 mb-2 font-bold">
-              <span className="col-span-4">File name</span>
+              <span className="col-span-3">File name</span>
               <span>Duration</span>
+              <span>File size</span>
+              {user.role === "admin" && (
+                <span>User</span>
+              )}
               <span>Status</span>
               <span>Actions</span>
             </div>
             {transcriptions.map((transcription) => (
               <div key={transcription.id} className="grid grid-cols-8 items-center">
-                <span className="col-span-4 overflow-hidden truncate">
-                  <a
-                    href="#"
-                    className="text-blue-500 underline"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      downloadTranscription(transcription.id);
-                    }}
-                    >
-                    {transcription.filename}
-                  </a>
-                </span>
+                {transcription.filename ? (
+                  <span className="col-span-3 overflow-hidden truncate">
+                    <a
+                      href="#"
+                      className="text-blue-500 underline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        downloadTranscription(transcription.id);
+                      }}
+                      >
+                      {transcription.filename}
+                    </a>
+                  </span>
+                ) : (
+                  <span className="col-span-3 italic">Hidden</span>
+                )}
                 <span>{Math.round(transcription.duration / 60)}min{Math.round(transcription.duration % 60)}sec</span>
+                <span>{formatFileSize(transcription.size)}</span>
+                {user.role === "admin" && (
+                  <span>{transcription.username}</span>
+                )}
                 <span><StatusBadge status={transcription.status} /></span>
                 <span className="flex items-center gap-2">
-                  {transcription.status === "done" && (
+                  {transcription.status === "done" && transcription.user_id === user.id && (
                     <ResultModal transcription={transcription} downloadTranscription={downloadTranscription} />
                   )}
                   <DeleteModal transcriptionId={transcription.id} reloadList={listTranscriptions} />
@@ -263,7 +291,7 @@ function ResultModal({ transcription, downloadTranscription }) {
       });
       const data1 = await response.json()
       if (data1) {
-        const response = await fetch(import.meta.env.VITE_API_URL || "/api" + data1.url + '/txt')
+        const response = await fetch((import.meta.env.VITE_API_URL || "/api") + data1.url + '/txt')
         const data2 = await response.text()
         if (data2) {
           setOverview(data2)

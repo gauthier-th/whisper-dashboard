@@ -175,7 +175,15 @@ app.get('/api/transcriptions', jwtMiddleware, async (req, res) => {
       filters.push('user_id = ?');
       filterParams.push(req.user.id);
     }
-    const transcriptions = await getTranscriptions({ limit, offset, filters, filterParams });
+    let transcriptions = await getTranscriptions({ limit, offset, filters, filterParams });
+    if (req.user.role === 'admin') {
+      transcriptions = transcriptions.map((transcription) => {
+        if (transcription.user_id !== req.user.id) {
+          delete transcription.filename;
+        }
+        return transcription;
+      });
+    }
     res.json(transcriptions);
   }
   catch (err) {
@@ -190,7 +198,7 @@ app.get('/api/transcriptions/:id', jwtMiddleware, async (req, res) => {
       res.status(404).send('Transcription not found');
       return;
     }
-    if (req.user.role !== 'admin' && transcription.user_id !== req.user.id) {
+    if (transcription.user_id !== req.user.id) {
       res.status(403).send('Forbidden');
       return;
     }
@@ -266,7 +274,7 @@ app.get('/api/transcriptions/:id/download', jwtMiddleware, async (req, res) => {
       res.status(404).send('Transcription not found');
       return;
     }
-    if (req.user.role !== 'admin' && transcription.user_id !== req.user.id) {
+    if (transcription.user_id !== req.user.id) {
       res.status(403).send('Forbidden');
       return;
     }
