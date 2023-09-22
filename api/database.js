@@ -1,7 +1,10 @@
+import fs from "fs";
+import path from "path";
 import sqlite3 from "sqlite3";
 import bcrypt from "bcrypt";
 
-const db = new sqlite3.Database("./whisper-dashboard.db");
+const dbPath = fs.existsSync("/config") ? "/config/whisper-dashboard.db" : path.join(path.resolve(), "whisper-dashboard.db");
+const db = new sqlite3.Database(dbPath);
 
 const saltRounds = 10;
 
@@ -11,6 +14,7 @@ db.serialize(() => {
     if (!err || rows) return;
     db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT, email TEXT, role TEXt, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)", async () => {
       await createUser({ username: "admin", password: "admin", email: "test@mail.com", role: "admin" });
+      console.log("Created default user: admin/admin");
     });
     db.run("CREATE TABLE IF NOT EXISTS transcriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, filename TEXT, path TEXT, size INTEGER, mimetype TEXT, duration INTEGER, status TEXT, user_id INTEGER, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
   });

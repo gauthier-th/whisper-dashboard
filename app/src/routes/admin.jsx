@@ -17,7 +17,7 @@ function Logout() {
 
   async function getUsers() {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/users`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
         },
@@ -38,7 +38,7 @@ function Logout() {
   async function createUser() {
     try {
       if (!username || !email || !password) return
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -165,7 +165,7 @@ function UpdateUserModal({ user, getUsers }) {
 
   async function updateUser() {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/${user.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/users/${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -269,7 +269,7 @@ function DeleteUserModal({ user, getUsers }) {
 
   async function deleteUser() {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/${user.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/users/${user.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${accessToken}`,

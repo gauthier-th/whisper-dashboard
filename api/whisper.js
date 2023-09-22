@@ -1,9 +1,17 @@
 import path from 'path';
+import fsSync from 'fs';
 import whisper from 'node-whisper';
 import { getTranscriptionById, getTranscriptions, updateTranscription } from './database.js';
 
 const maxParallelTranscriptions = 1;
 let runningTranscriptions = [];
+
+const dbFiles = fsSync.existsSync("/config") ? "/config/files" : path.join(path.resolve(), 'files');
+if (!fsSync.existsSync(dbFiles)) {
+  fsSync.mkdirSync(dbFiles);
+}
+const whisperModelsDir = fsSync.existsSync("/config") ? "/config/whisper-models" : undefined;
+const whisperModel = process.env.WHISPER_MODEL || 'tiny';
 
 export async function browseTranscriptions() {
   // Wait for database to be ready
@@ -46,10 +54,11 @@ async function processTranscription(transcriptionId) {
   runningTranscriptions.push(transcription.id);
 
   // Process the transcription
-  const data = await whisper(path.join(path.resolve(), 'files', transcription.path), {
-    model: 'tiny',
+  const data = await whisper(path.join(dbFiles, transcription.path), {
+    model: whisperModel,
     language: 'fr',
-    output_dir: path.join(path.resolve(), 'files'),
+    output_dir: dbFiles,
+    model_dir: whisperModelsDir,
   });
 
   // Check if the transcription still exists

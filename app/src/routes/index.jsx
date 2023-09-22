@@ -11,7 +11,7 @@ function App() {
   async function listTranscriptions() {
     if (!accessToken) return
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/transcriptions`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/transcriptions`, {
         method: 'GET',
         headers: {
           'Authorization': `JWT ${accessToken}`
@@ -32,7 +32,7 @@ function App() {
 
   async function downloadTranscription(id, format) {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/transcriptions/${id}/download`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/transcriptions/${id}/download`, {
         method: 'GET',
         headers: {
           'Authorization': `JWT ${accessToken}`
@@ -41,7 +41,7 @@ function App() {
       const data = await response.json()
       if (data) {
         const link = document.createElement('a')
-        link.href = import.meta.env.VITE_API_URL + data.url + (format ? '/' + format : '')
+        link.href = import.meta.env.VITE_API_URL || "/api" + data.url + (format ? '/' + format : '')
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -142,7 +142,7 @@ function NewTranscriptionModal({ reloadList }) {
     try {
       const body = new FormData()
       body.append('file', file)
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/transcriptions`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/transcriptions`, {
         method: 'POST',
         headers: {
           'Authorization': `JWT ${accessToken}`
@@ -195,7 +195,7 @@ function DeleteModal({ transcriptionId, reloadList }) {
 
   async function deleteTranscription() {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/transcriptions/${transcriptionId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/transcriptions/${transcriptionId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `JWT ${accessToken}`
@@ -255,7 +255,7 @@ function ResultModal({ transcription, downloadTranscription }) {
 
   async function getTextTranscription() {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/transcriptions/${transcription.id}/download`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/transcriptions/${transcription.id}/download`, {
         method: 'GET',
         headers: {
           'Authorization': `JWT ${accessToken}`
@@ -263,7 +263,7 @@ function ResultModal({ transcription, downloadTranscription }) {
       });
       const data1 = await response.json()
       if (data1) {
-        const response = await fetch(import.meta.env.VITE_API_URL + data1.url + '/txt')
+        const response = await fetch(import.meta.env.VITE_API_URL || "/api" + data1.url + '/txt')
         const data2 = await response.text()
         if (data2) {
           setOverview(data2)

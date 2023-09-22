@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import fsSync from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 import express from 'express';
@@ -22,6 +23,11 @@ import {
 import { browseTranscriptions } from './whisper.js';
 
 browseTranscriptions(); // Start the transcription process
+
+const dbFiles = fsSync.existsSync("/config") ? "/config/files" : path.join(path.resolve(), 'files');
+if (!fsSync.existsSync(dbFiles)) {
+  fsSync.mkdirSync(dbFiles);
+}
 
 const app = express();
 
@@ -54,10 +60,6 @@ const jwtMiddleware = (req, res, next) => {
     res.status(401).send('No token provided');
   }
 };
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(path.resolve(), '../app/dist', 'index.html'));
-});
 
 app.get('/api', (req, res) => {
   res.send('Hello from API!');
@@ -214,7 +216,7 @@ app.delete('/api/transcriptions/:id', jwtMiddleware, async (req, res) => {
     files.push(...['.txt', '.json', '.tsv', '.srt', '.vtt'].map((ext) => transcription.path.replace(/\.[^/.]+$/, '') + ext));
     for (const file of files) {
       try {
-        await fs.unlink(path.join(path.resolve(), 'files', file));
+        await fs.unlink(path.join(dbFiles, file));
       }
       catch {}
     }
@@ -236,7 +238,7 @@ app.post('/api/transcriptions', jwtMiddleware, async (req, res) => {
     const filePath = uuidv4() + '.' + extension;
     const { size, mimetype } = file;
     const duration = await getAudioDurationInSeconds(file.tempFilePath);
-    await file.mv(path.join(path.resolve(), 'files', filePath));
+    await file.mv(path.join(dbFiles, filePath));
     const transcriptionData = {
       filename,
       path: filePath,
@@ -285,7 +287,7 @@ app.get('/api/transcriptions/file/:token/:format?', async (req, res) => {
       res.status(404).send('Transcription not found');
       return;
     }
-    const filePath = path.join(path.resolve(), 'files', req.params.format ? transcription.path.replace(/\.[^/.]+$/, '') + '.' + req.params.format : transcription.path);
+    const filePath = path.join(dbFiles, req.params.format ? transcription.path.replace(/\.[^/.]+$/, '') + '.' + req.params.format : transcription.path);
     if (await fs.stat(filePath).catch(() => false) === false) {
       res.status(404).send('File not found');
       return;
@@ -298,6 +300,10 @@ app.get('/api/transcriptions/file/:token/:format?', async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on http://localhost:${process.env.PORT}`);
+app.get('*', (req, res) => {
+  res.sendFile(path.join(path.resolve(), '../app/dist', 'index.html'));
+});
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log(`Server running on http://localhost:${process.env.PORT || 3000}`);
 });

@@ -1,0 +1,9 @@
+api/node_modules
+api/.env
+api/tmp
+api/whisper-dashboard.db
+api/files/*
+!api/files/.gitignore
+app/node_modules
+app/.env
+app/dist
