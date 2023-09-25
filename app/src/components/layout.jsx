@@ -39,6 +39,16 @@ function Layout() {
       <div className="mt-4 flex-1 flex flex-col py-2 px-4">
         <Outlet />
       </div>
+      <footer className="flex flex-col items-center py-2">
+        <a
+          href="https://github.com/gauthier-th/whisper-dashboard"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="italic"
+        >
+          Created by <span className="text-blue-400">gauthier-th</span>
+        </a>
+      </footer>
     </div>
   )
 }

@@ -3,7 +3,7 @@ import fsSync from 'fs';
 import whisper from 'node-whisper';
 import { getTranscriptionById, getTranscriptions, updateTranscription } from './database.js';
 
-const maxParallelTranscriptions = 1;
+const maxParallelTranscriptions = process.env.MAX_PARALLEL_TRANSCRIPTIONS || 1;
 let runningTranscriptions = [];
 
 const dbFiles = fsSync.existsSync("/config") ? "/config/files" : path.join(path.resolve(), 'files');

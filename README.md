@@ -4,7 +4,7 @@ A simple dashboard for sending translations to [Whisper](https://github.com/open
 
 You can use this dashboard to create user accounts, upload audio files, and download the results of the speech recognition model.
 
-This dashboard uses [Node.js](https://github.com/nodejs/node) and [Express](https://github.com/expressjs/express) for the backend with a [React](https://github.com/facebook/react) frontend.
+This dashboard uses [Node.js](https://github.com/nodejs/node) and [Express](https://github.com/expressjs/express) for the backend with a [React](https://github.com/facebook/react) frontend. Whisper's Python API is used to run the speech recognition model.
 
 ## Overview
 
@@ -22,11 +22,25 @@ The first time the dashboard is started, an admin user will be created, with use
 
 As admin, you can create or delete users, manage user roles (`user` or `admin`), and view and manage transcriptions sent by all users.
 
+## Environment variables
+
+You can configure the dashboard with the following environment variables:
+
+| Variable name               | Description                                          | Default value |
+|-----------------------------|------------------------------------------------------|---------------|
+| PORT                        | Port to run the server on                            | 3000          |
+| JWT_SECRET                  | Secret key for signing JWT tokens                    |               |
+| CORS_ORIGIN                 | If specified, the origin to allow CORS requests from |               |
+| MAX_PARALLEL_TRANSCRIPTIONS | Maximum number of transcriptions to run in parallel  | 1             |
+| WHISPER_MODEL               | Name of the Whisper model to use ([list here](https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages)) | tiny          |
+
+The variable `CORS_ORIGIN` is useful for development with the frontend running on http://localhost:5173 while the backend runs on http://localhost:3000.
+
 ## Installation with Docker
 
 Coming soon...
 
-## Installation without Docker
+## Native installation
 
 ### Requirements
 
@@ -42,16 +56,13 @@ Coming soon...
     npm install
     pip install -U openai-whisper
     ```
-3. Copy the `.env.example` file to `.env` and fill in the values:
- - `PORT`: The port to run the server on
- - `JWT_SECRET`: A secret key for signing JWT tokens
- - `CORS_ORIGIN`: If specified, the origin to allow CORS requests from (useful for development with the frontend running on http://localhost:5173)
+3. Copy the `.env.example` file to `.env` and fill in the values from the table above. You can leave the default values.
 4. Install the dependencies for the frontend:
     ```bash
     cd app
     npm install
     ```
-5. Copy the `.env.example` file to `.env` and fill in the values:
+5. Copy the `.env.example` file to `.env` and fill in this value:
   - `VITE_API_URL`: The URL of the backend API (e.g. http://localhost:3000 for development)
 
 ### Development
