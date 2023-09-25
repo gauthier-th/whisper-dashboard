@@ -38,7 +38,33 @@ The variable `CORS_ORIGIN` is useful for development with the frontend running o
 
 ## Installation with Docker
 
-Coming soon...
+### With command line arguments
+
+You can build the Docker image with:
+```bash
+docker build -t whisper-dashboard .
+```
+
+Or you can pull the image from GitHub Container Registry:
+```bash
+docker pull ghcr.io/gauthier-th/whisper-dashboard:latest
+```
+
+Then run the container with:
+
+```bash
+docker run -d \
+  -p 3000:3000 \
+  -e JWT_SECRET=secret \
+  -e MAX_PARALLEL_TRANSCRIPTIONS=1 \
+  -e WHISPER_MODEL=tiny \
+  -v /path/to/data:/config \
+  ghcr.io/gauthier-th/whisper-dashboard:latest
+```
+
+### With a Docker Compose file
+
+To do...
 
 ## Native installation
 
