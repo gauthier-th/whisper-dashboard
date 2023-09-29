@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  whisper-dashboard:
+    build:
+      context: "."
+    image: "whisper-dashboard:latest"
+    ports:
+      - "3000:3000"
+    volumes:
+      - "/path/to/data:/config"
+    environment:
+      - JWT_SECRET=secret

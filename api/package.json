@@ -1,6 +1,6 @@
 {
-  "name": "whisper-dashboard",
-  "version": "1.0.0",
+  "name": "whisper-dashboard-api",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "type": "module",

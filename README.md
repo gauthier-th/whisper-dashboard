@@ -64,7 +64,22 @@ docker run -d \
 
 ### With a Docker Compose file
 
-To do...
+You can also use this Docker Compose to run the dashboard:
+
+```yaml
+version: "3.8"
+services:
+    whisper-dashboard:
+        ports:
+            - '3000:3000'
+        environment:
+            - JWT_SECRET=secret
+            - MAX_PARALLEL_TRANSCRIPTIONS=1
+            - WHISPER_MODEL=tiny
+        volumes:
+            - '/path/to/data:/config'
+        image: 'ghcr.io/gauthier-th/whisper-dashboard:latest'
+```
 
 ## Native installation
 
