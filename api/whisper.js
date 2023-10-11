@@ -54,12 +54,23 @@ async function processTranscription(transcriptionId) {
   runningTranscriptions.push(transcription.id);
 
   // Process the transcription
-  const data = await whisper(path.join(dbFiles, transcription.path), {
-    model: whisperModel,
-    language: 'fr',
-    output_dir: dbFiles,
-    model_dir: whisperModelsDir,
-  });
+  let data;
+  try {
+    data = await whisper(path.join(dbFiles, transcription.path), {
+      model: whisperModel,
+      language: transcription.language || undefined,
+      output_dir: dbFiles,
+      model_dir: whisperModelsDir,
+    });
+  }
+  catch (e) {
+    console.error(e);
+    await updateTranscription({
+      id: transcription.id,
+      status: 'error',
+    });
+    return;
+  }
 
   // Check if the transcription still exists
   if (!await getTranscriptionById(transcription.id)) {

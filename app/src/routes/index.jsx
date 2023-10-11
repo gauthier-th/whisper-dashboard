@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import toast from 'react-hot-toast'
 import { RiLoader4Fill, RiAddFill } from 'react-icons/ri'
 import Modal from '../components/modal.jsx'
+import Select from '../components/select.jsx'
 
 function formatFileSize(bytes) {
   if (bytes < 1024) {
@@ -111,10 +112,11 @@ function App() {
       {transcriptions && transcriptions.length > 0 && (
         <div className="mt-2 w-full rounded-lg border border-gray-600 p-4">
           <div className="flex flex-col gap-1">
-            <div className="grid grid-cols-8 mb-2 font-bold">
+            <div className="grid grid-cols-9 mb-2 font-bold">
               <span className="col-span-3">File name</span>
               <span>Duration</span>
               <span>File size</span>
+              <span>Language</span>
               {user.role === "admin" && (
                 <span>User</span>
               )}
@@ -122,7 +124,7 @@ function App() {
               <span>Actions</span>
             </div>
             {transcriptions.map((transcription) => (
-              <div key={transcription.id} className="grid grid-cols-8 items-center">
+              <div key={transcription.id} className="grid grid-cols-9 items-center">
                 {transcription.filename ? (
                   <span className="col-span-3 overflow-hidden truncate">
                     <a
@@ -141,6 +143,7 @@ function App() {
                 )}
                 <span>{Math.round(transcription.duration / 60)}min{Math.round(transcription.duration % 60)}sec</span>
                 <span>{formatFileSize(transcription.size)}</span>
+                <span>{transcription.language || "Default"}</span>
                 {user.role === "admin" && (
                   <span>{transcription.username}</span>
                 )}
@@ -164,12 +167,16 @@ function NewTranscriptionModal({ reloadList }) {
   const accessToken = useSelector((state) => state.accessToken)
   const [isNewTranscriptionOpen, setIsNewTranscriptionOpen] = useState(false)
   const [file, setFile] = useState(null)
+  const [language, setLanguage] = useState(null)
+
+  const languages = ["Afrikaans", "Albanian", "Amharic", "Arabic", "Armenian", "Assamese", "Azerbaijani", "Bashkir", "Basque", "Belarusian", "Bengali", "Bosnian", "Breton", "Bulgarian", "Burmese", "Castilian", "Catalan", "Chinese", "Croatian", "Czech", "Danish", "Dutch", "English", "Estonian", "Faroese", "Finnish", "Flemish", "French", "Galician", "Georgian", "German", "Greek", "Gujarati", "Haitian", "Haitian Creole", "Hausa", "Hawaiian", "Hebrew", "Hindi", "Hungarian", "Icelandic", "Indonesian", "Italian", "Japanese", "Javanese", "Kannada", "Kazakh", "Khmer", "Korean", "Lao", "Latin", "Latvian", "Letzeburgesch", "Lingala", "Lithuanian", "Luxembourgish", "Macedonian", "Malagasy", "Malay", "Malayalam", "Maltese", "Maori", "Marathi", "Moldavian", "Moldovan", "Mongolian", "Myanmar", "Nepali", "Norwegian", "Nynorsk", "Occitan", "Panjabi", "Pashto", "Persian", "Polish", "Portuguese", "Punjabi", "Pushto", "Romanian", "Russian", "Sanskrit", "Serbian", "Shona", "Sindhi", "Sinhala", "Sinhalese", "Slovak", "Slovenian", "Somali", "Spanish", "Sundanese", "Swahili", "Swedish", "Tagalog", "Tajik", "Tamil", "Tatar", "Telugu", "Thai", "Tibetan", "Turkish", "Turkmen", "Ukrainian", "Urdu", "Uzbek", "Valencian", "Vietnamese", "Welsh", "Yiddish", "Yoruba"]
 
   async function postTranscription() {
     if (!file) return
     try {
       const body = new FormData()
       body.append('file', file)
+      body.append('language', language)
       const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/transcriptions`, {
         method: 'POST',
         headers: {
@@ -200,12 +207,21 @@ function NewTranscriptionModal({ reloadList }) {
       isOpen={isNewTranscriptionOpen}
       onClose={() => setIsNewTranscriptionOpen(false)}
       title="New transcription"
+      className="overflow-visible"
     >
       <span>Choose the file you want to transcribe:</span>
       <input
         type="file"
-        className="mt-2 file-input"
+        className="my-2 file-input"
         onChange={(e) => setFile(e.target.files[0])}
+      />
+      <span>(Optionnal) Choose the language of the transcription:</span>
+      <Select
+        className="mt-2"
+        value={language}
+        setValue={setLanguage}
+        values={languages}
+        placeholder="Choose a language"
       />
       <button
         className="button mt-4"

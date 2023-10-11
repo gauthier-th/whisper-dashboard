@@ -8,17 +8,63 @@ const db = new sqlite3.Database(dbPath);
 
 const saltRounds = 10;
 
-// create users table if it doesn't exist with a default admin user
-db.serialize(() => {
-  db.each("SELECT * FROM users", (err, rows) => {
-    if (!err || rows) return;
-    db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT, email TEXT, role TEXt, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)", async () => {
-      await createUser({ username: "admin", password: "admin", email: "test@mail.com", role: "admin" });
-      console.log("Created default user: admin/admin");
+// create tables if they don't exist or add missing fields if needed
+function createTables() {
+  const userFields = [
+    "id INTEGER PRIMARY KEY AUTOINCREMENT",
+    "username TEXT",
+    "password TEXT",
+    "email TEXT",
+    "role TEXt",
+    "created_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+  ];
+  const transcriptionFields = [
+    "id INTEGER PRIMARY KEY AUTOINCREMENT",
+    "filename TEXT",
+    "path TEXT",
+    "size INTEGER",
+    "mimetype TEXT",
+    "duration INTEGER",
+    "language TEXT",
+    "status TEXT",
+    "user_id INTEGER",
+    "result TEXT",
+    "created_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+    "updated_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+  ]
+  db.serialize(() => {
+    db.get(`SELECT count(*) AS count FROM sqlite_master WHERE type='table' AND name='users'`, (err, rows) => {
+      if (rows.count === 0) {
+        db.run(`CREATE TABLE users (${userFields.join(", ")})`);
+        createUser({ username: "admin", password: "admin", email: "test@mail.com", role: "admin" });
+      }
+      else {
+        // check that all fields are present
+        db.all(`PRAGMA table_info(users)`, (err, rows) => {
+          const missingFields = userFields.filter(field => !rows.find(row => row.name === field.split(" ")[0]));
+          if (missingFields.length > 0) {
+            db.run(`ALTER TABLE users ADD COLUMN ${missingFields.join(", ")}`);
+          }
+        });
+      }
     });
-    db.run("CREATE TABLE IF NOT EXISTS transcriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, filename TEXT, path TEXT, size INTEGER, mimetype TEXT, duration INTEGER, status TEXT, user_id INTEGER, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    db.get(`SELECT count(*) AS count FROM sqlite_master WHERE type='table' AND name='transcriptions'`, (err, rows) => {
+      if (rows.count === 0) {
+        db.run(`CREATE TABLE transcriptions (${transcriptionFields.join(", ")})`);
+      }
+      else {
+        // check that all fields are present
+        db.all(`PRAGMA table_info(transcriptions)`, (err, rows) => {
+          const missingFields = transcriptionFields.filter(field => !rows.find(row => row.name === field.split(" ")[0]));
+          if (missingFields.length > 0) {
+            db.run(`ALTER TABLE transcriptions ADD COLUMN ${missingFields.join(", ")}`);
+          }
+        });
+      }
+    });
   });
-});
+}
+createTables();
 
 export async function createUser({ username, password, email, role }) {
   password = await bcrypt.hash(password, saltRounds);
@@ -118,9 +164,9 @@ export async function deleteUser(id) {
   });
 }
 
-export async function createTranscription({ filename, path, size, mimetype, duration, status, user_id, result }) {
+export async function createTranscription({ filename, path, size, mimetype, duration, language, status, user_id, result }) {
   return new Promise((resolve, reject) => {
-    db.run("INSERT INTO transcriptions (filename, path, size, mimetype, duration, status, user_id, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [filename, path, size, mimetype, duration, status, user_id, result], function (err) {
+    db.run("INSERT INTO transcriptions (filename, path, size, mimetype, duration, language, status, user_id, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", [filename, path, size, mimetype, duration, language, status, user_id, result], function (err) {
       if (err) {
         reject(err);
       } else {
@@ -166,7 +212,7 @@ export async function getTranscriptions({ filters, filterParams, limit, offset, 
   });
 }
 
-export async function updateTranscription({ id, filename, path, size, mimetype, duration, status, user_id, result } = {}) {
+export async function updateTranscription({ id, filename, path, size, mimetype, duration, language, status, user_id, result } = {}) {
   return new Promise(async (resolve, reject) => {
     const params = [];
     if (filename) params.push(["filename", filename]);
@@ -174,6 +220,7 @@ export async function updateTranscription({ id, filename, path, size, mimetype, 
     if (size) params.push(["size", size]);
     if (mimetype) params.push(["mimetype", mimetype]);
     if (duration) params.push(["duration", duration]);
+    if (language) params.push(["language", language]);
     if (status) params.push(["status", status]);
     if (user_id) params.push(["user_id", user_id]);
     if (result) params.push(["result", result]);

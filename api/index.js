@@ -240,6 +240,7 @@ app.post('/api/transcriptions', jwtMiddleware, async (req, res) => {
       res.status(400).send('No file uploaded');
       return;
     }
+    const language = req.body.language || "";
     const file = req.files.file;
     const filename = file.name;
     const extension = filename.split('.').pop();
@@ -253,6 +254,7 @@ app.post('/api/transcriptions', jwtMiddleware, async (req, res) => {
       size,
       mimetype,
       duration,
+      language,
       status: 'pending',
       user_id: req.user.id,
       result: null,

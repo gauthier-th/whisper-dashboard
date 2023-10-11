@@ -3,14 +3,14 @@ import { Listbox, Transition } from '@headlessui/react'
 import { RiCheckLine } from 'react-icons/ri'
 import { HiSelector } from 'react-icons/hi'
 
-export default function Select({ value, setValue, values, accessor, placeholder }) {
+export default function Select({ value, setValue, values, accessor, placeholder, className, orientation = "bottom" }) {
   const containerRef = useRef(null)
 
-  return <div>
+  return <div className={className}>
     <Listbox value={value} onChange={setValue}>
       <div ref={containerRef} className="relative">
-        <Listbox.Button className="relative w-full text-left bg-gray-700 input-field">
-          <span className={`block truncate${(accessor && value ? accessor(value) : value) ? "" : " opacity-60"}`}>
+        <Listbox.Button className="relative w-full text-left bg-transparent input-field">
+          <span className="block truncate text-sm">
             {(accessor && value ? accessor(value) : value) || (placeholder ?? "Choose an option")}
           </span>
           <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
@@ -27,7 +27,7 @@ export default function Select({ value, setValue, values, accessor, placeholder 
           leaveTo="opacity-0"
         >
           {() => (
-            <Listbox.Options className="z-10 absolute w-full py-1 mt-1 overflow-auto bg-gray-700 rounded-md shadow-lg max-h-[240px] ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
+            <Listbox.Options className={`z-10 absolute w-full py-1 my-1${orientation === "bottom" ? "" : ""} overflow-auto bg-gray-700 rounded-md shadow-lg max-h-[240px] ring-1 ring-black ring-opacity-5 focus:outline-none text-sm`}>
               {values.map((value, key) => (
                 <Listbox.Option
                   key={key}
