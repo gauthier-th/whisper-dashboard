@@ -1,18 +1,26 @@
 import { useEffect } from 'react'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate, Outlet, Link } from 'react-router-dom'
+import { logout } from '../redux/actions'
 
 function Layout() {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const accessToken = useSelector((state) => state.accessToken)
   const user = useSelector((state) => state.user)
 
   useEffect(() => {
     if (!accessToken) {
-      console.log('redirecting to login')
       navigate('/login')
     }
-  }, [navigate, accessToken])
+    else {
+      const decodedToken = parseJwt(accessToken)
+      if (Date.now() > decodedToken.exp * 1000) {
+        navigate('/login')
+        dispatch(logout())
+      }
+    }
+  }, [navigate, accessToken, dispatch])
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -51,6 +59,15 @@ function Layout() {
       </footer>
     </div>
   )
+}
+
+function parseJwt(token) {
+  const base64Url = token.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(window.atob(base64).split('').map((c) => {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+  return JSON.parse(jsonPayload);
 }
 
 export default Layout

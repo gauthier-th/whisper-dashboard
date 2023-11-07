@@ -175,7 +175,8 @@ app.get('/api/transcriptions', jwtMiddleware, async (req, res) => {
       filters.push('user_id = ?');
       filterParams.push(req.user.id);
     }
-    let transcriptions = await getTranscriptions({ limit, offset, filters, filterParams });
+    const sort = ['created_at', 'DESC'];
+    let transcriptions = await getTranscriptions({ limit, offset, filters, filterParams, sort });
     if (req.user.role === 'admin') {
       transcriptions = transcriptions.map((transcription) => {
         if (transcription.user_id !== req.user.id) {

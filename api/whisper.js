@@ -3,7 +3,7 @@ import fsSync from 'fs';
 import whisper from 'node-whisper';
 import { getTranscriptionById, getTranscriptions, updateTranscription } from './database.js';
 
-const maxParallelTranscriptions = process.env.MAX_PARALLEL_TRANSCRIPTIONS || 1;
+const maxParallelTranscriptions = parseInt(process.env.MAX_PARALLEL_TRANSCRIPTIONS) || 1;
 let runningTranscriptions = [];
 
 const dbFiles = fsSync.existsSync("/config") ? "/config/files" : path.join(path.resolve(), 'files');
@@ -18,7 +18,7 @@ export async function browseTranscriptions() {
   await new Promise(resolve => setTimeout(resolve, 2000));
 
   // Check if we can start a new transcription
-  if (runningTranscriptions.length === maxParallelTranscriptions) {
+  if (runningTranscriptions.length >= maxParallelTranscriptions) {
     return;
   }
 
@@ -58,7 +58,7 @@ async function processTranscription(transcriptionId) {
   try {
     data = await whisper(path.join(dbFiles, transcription.path), {
       model: whisperModel,
-      language: transcription.language || undefined,
+      language: !transcription.language || transcription.language === 'null' ? undefined : transcription.language,
       output_dir: dbFiles,
       model_dir: whisperModelsDir,
     });

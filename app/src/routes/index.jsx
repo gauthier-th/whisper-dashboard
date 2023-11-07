@@ -24,11 +24,12 @@ function App() {
   const accessToken = useSelector((state) => state.accessToken)
   const user = useSelector((state) => state.user)
   const [transcriptions, setTranscriptions] = useState(null)
+  const [page, setPage] = useState(1)
 
   async function listTranscriptions() {
     if (!accessToken) return
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/transcriptions`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/transcriptions?page=${page}`, {
         method: 'GET',
         headers: {
           'Authorization': `JWT ${accessToken}`
@@ -73,10 +74,11 @@ function App() {
   }
 
   useEffect(() => {
+    setTranscriptions(null)
     listTranscriptions()
     const timer = setInterval(() => listTranscriptions(), 5000)
     return () => clearInterval(timer)
-  }, [])
+  }, [page])
 
   function StatusBadge({ status }) {
     if (status === "pending") {
@@ -123,7 +125,7 @@ function App() {
               <span>Status</span>
               <span>Actions</span>
             </div>
-            {transcriptions.map((transcription) => (
+            {transcriptions.slice(0, -1).map((transcription) => (
               <div key={transcription.id} className="grid grid-cols-9 items-center">
                 {transcription.filename ? (
                   <span className="col-span-3 overflow-hidden truncate">
@@ -143,7 +145,7 @@ function App() {
                 )}
                 <span>{Math.round(transcription.duration / 60)}min{Math.round(transcription.duration % 60)}sec</span>
                 <span>{formatFileSize(transcription.size)}</span>
-                <span>{transcription.language || "Default"}</span>
+                <span>{("" + transcription.language) === "null" ? "Default" : transcription.language}</span>
                 {user.role === "admin" && (
                   <span>{transcription.username}</span>
                 )}
@@ -156,6 +158,22 @@ function App() {
                 </span>
               </div>
             ))}
+          </div>
+          <div className="flex justify-center items-center mt-4 gap-2">
+            <button
+              className="button button-small"
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1}
+            >
+              Previous
+            </button>
+            <button
+              className="button button-small"
+              onClick={() => setPage(page + 1)}
+              disabled={transcriptions.length < 15}
+            >
+              Next
+            </button>
           </div>
         </div>
       )}
@@ -207,7 +225,7 @@ function NewTranscriptionModal({ reloadList }) {
       isOpen={isNewTranscriptionOpen}
       onClose={() => setIsNewTranscriptionOpen(false)}
       title="New transcription"
-      className="overflow-visible"
+      className="overflow-visible flex flex-col"
     >
       <span>Choose the file you want to transcribe:</span>
       <input
@@ -224,7 +242,7 @@ function NewTranscriptionModal({ reloadList }) {
         placeholder="Choose a language"
       />
       <button
-        className="button mt-4"
+        className="button mt-4 self-end"
         onClick={() => postTranscription()}
       >
         Send file
