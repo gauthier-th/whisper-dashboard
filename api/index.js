@@ -17,6 +17,7 @@ import {
   getTranscriptionById,
   getTranscriptions,
   getUserById,
+  getUserByUsername,
   getUsers,
   updateUser,
 } from './database.js';
@@ -107,6 +108,10 @@ app.post('/api/users', jwtMiddleware, async (req, res) => {
   }
   const { username, password, email } = req.body;
   try {
+    if (await getUserByUsername(username)) {
+      res.status(400).send('Username is already used');
+      return;
+    }
     const user = await createUser({ username, password, email, role: 'user' });
     res.json(user);
   }
@@ -122,12 +127,12 @@ app.put('/api/users/:id', jwtMiddleware, async (req, res) => {
   const { username, password, email, role } = req.body;
   try {
     const user = await getUserById(req.params.id);
-    if (user.id === 1 && req.user.id !== 1) {
-      res.status(403).send('Forbidden');
-      return;
-    }
     if (!user) {
       res.status(404).send('User not found');
+      return;
+    }
+    if (user.id === 1 && req.user.id !== 1) {
+      res.status(403).send('Forbidden');
       return;
     }
     await updateUser({ id: user.id, username, password, email, role });

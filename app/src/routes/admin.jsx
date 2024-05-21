@@ -5,7 +5,7 @@ import { RiLoader4Fill } from "react-icons/ri"
 import Modal from "../components/modal"
 import Select from "../components/select"
 
-function Logout() {
+function Admin() {
   const accessToken = useSelector((state) => state.accessToken)
   const loggedUser = useSelector((state) => state.user);
   const [users, setUsers] = useState(null)
@@ -37,7 +37,12 @@ function Logout() {
 
   async function createUser() {
     try {
+      if (!users) return
       if (!username || !email || !password) return
+      if (users.find((user) => user.username === username)) {
+        toast.error('An user with the same username already exists!')
+        return
+      }
       const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/users`, {
         method: 'POST',
         headers: {
@@ -66,61 +71,61 @@ function Logout() {
   return (
     <div className="flex flex-col justify-center items-center gap-3">
       <h1 className="text-3xl">Admin panel</h1>
-      <h2 className="text-xl mt-4">Create an user</h2>
-      <div className="w-96 max-w-full">
-        <label className="input-label" htmlFor="username">
-          Username
-        </label>
-        <input
-          className="input-field"
-          id="username"
-          type="username"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && emailInput.current.focus()}
-        />
-      </div>
-      <div className="w-96 max-w-full">
-        <label className="input-label" htmlFor="email">
-          Email
-        </label>
-        <input
-          ref={emailInput}
-          className="input-field"
-          id="email"
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && passwordInput.current.focus()}
-        />
-      </div>
-      <div className="w-96 max-w-full">
-        <label className="input-label" htmlFor="password">
-          Password
-        </label>
-        <input
-          ref={passwordInput}
-          className="input-field"
-          id="password"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && createUser()}
-        />
-      </div>
-      <button className="button max-w-full" onClick={() => createUser()}>
-        Create user
-      </button>
       <h2 className="text-xl mt-6">Users list</h2>
       {!users && (
         <div className="flex justify-center items-center">
           <RiLoader4Fill className="text-3xl animate-spin" />
         </div>
       )}
-      {users && (
+      {users && <>
+        <h2 className="text-xl mt-4">Create an user</h2>
+        <div className="w-96 max-w-full">
+          <label className="input-label" htmlFor="username">
+            Username
+          </label>
+          <input
+            className="input-field"
+            id="username"
+            type="username"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && emailInput.current.focus()}
+          />
+        </div>
+        <div className="w-96 max-w-full">
+          <label className="input-label" htmlFor="email">
+            Email
+          </label>
+          <input
+            ref={emailInput}
+            className="input-field"
+            id="email"
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && passwordInput.current.focus()}
+          />
+        </div>
+        <div className="w-96 max-w-full">
+          <label className="input-label" htmlFor="password">
+            Password
+          </label>
+          <input
+            ref={passwordInput}
+            className="input-field"
+            id="password"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && createUser()}
+          />
+        </div>
+        <button className="button max-w-full" onClick={() => createUser()}>
+          Create user
+        </button>
         <div className="mt-2 rounded-lg border border-gray-600 p-4">
           <div className="flex flex-col gap-1">
             <div className="grid grid-cols-5 gap-4 mb-2 font-bold">
@@ -148,7 +153,7 @@ function Logout() {
             ))}
           </div>
         </div>
-      )}
+      </>}
     </div>
   )
 }
@@ -308,4 +313,4 @@ function DeleteUserModal({ user, getUsers }) {
   </>
 }
 
-export default Logout
+export default Admin

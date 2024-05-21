@@ -85,7 +85,7 @@ export async function getUserById(id) {
       if (err) {
         reject(err);
       } else {
-        delete row.password;
+        if (row) delete row.password;
         resolve(row);
       }
     });
@@ -98,7 +98,7 @@ export async function getUserByUsername(username, { keepPassword } = {}) {
       if (err) {
         reject(err);
       } else {
-        if (!keepPassword) delete row.password;
+        if (!keepPassword && row) delete row.password;
         resolve(row);
       }
     });
