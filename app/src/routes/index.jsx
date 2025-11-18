@@ -233,7 +233,7 @@ function NewTranscriptionModal({ reloadList }) {
         className="my-2 file-input"
         onChange={(e) => setFile(e.target.files[0])}
       />
-      <span>(Optionnal) Choose the language of the transcription:</span>
+      <span>(Optional) Choose the language of the transcription:</span>
       <Select
         className="mt-2"
         value={language}
